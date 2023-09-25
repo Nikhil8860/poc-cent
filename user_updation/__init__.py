@@ -3,8 +3,9 @@ import json
 from azure.functions import HttpRequest, HttpResponse
 from azure.cosmos import exceptions
 from get_db_object import get_db_container
-from secure_password import encrypt_pwd
+from secure_password import encrypt_pwd, decrypt_pwd
 from cryptography.fernet import Fernet
+
 
 def main(req: HttpRequest) -> HttpResponse:
     logging.info('HTTP trigger function processed a request.')
@@ -13,6 +14,10 @@ def main(req: HttpRequest) -> HttpResponse:
         input_json = req.get_json()
         key = Fernet.generate_key()
         fernet = Fernet(key)
+        old_password = str(input_json.get('old_password'))
+        encrypted_pwd = encrypt_pwd(old_password, fernet)
+        input_json['old_password'] = encrypted_pwd.decode()
+        decrypted_pwd = decrypt_pwd(input_json['old_password'], fernet)  # Decode password
         if not input_json.get("patient_id"):
             return HttpResponse("You have not provided patient_id in the request body", status_code=400)
         container = get_db_container(container_name)

@@ -2,7 +2,6 @@ import logging
 
 from azure.functions import HttpRequest, HttpResponse
 from get_db_object import get_db_container
-# item = container.create_item(body={"id": "1002", "email":"nikhil.sharma@abc.com"})
 
 
 def main(req: HttpRequest) -> HttpResponse:
@@ -19,9 +18,10 @@ def main(req: HttpRequest) -> HttpResponse:
             email = req_body.get('email')
 
     if email:
-        item = container.query_items(query="select * from email_data", enable_cross_partition_query=True)
+        item = container.query_items(query=f"select * from email_data where email_data.email='{email}'",
+                                     enable_cross_partition_query=True)
         all_email = [i.get("email") for i in item]
-        if email in all_email:
+        if len(all_email):
             return HttpResponse(f"Hello, {email}. This email is found in DB")
         else:
             return HttpResponse(f"Hello, {email}. This email Not found in DB")
