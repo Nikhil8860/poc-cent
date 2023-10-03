@@ -11,20 +11,23 @@ def main(req: HttpRequest) -> HttpResponse:
     container = get_db_container(container_name)
     if req.method == 'POST':
         req_body = req.get_json()
-        checked_fields = ['first_name', 'last_name', 'insurance_carrier_name', 'member_id', 'dob', 'gender']
+        checked_fields = ['first_name', 'last_name', 'insurance_carrier_name', 'member_id', 'dob', 'gender',
+                          'home_zip_code', 'state']
         if not all(key in req_body for key in checked_fields):
-            return HttpResponse("Error is request body", status_code=400)
-        email = req_body.get('email')
+            return HttpResponse(json.dumps({"msg": "Error is request Body", "status_code": 400}), status_code=400,
+                                mimetype="application/json")
+        member_id = req_body.get('member_id')
 
-        if email:
-            item = container.query_items(query=f'select * from users where users.email="{email}"',
+        if member_id:
+            item = container.query_items(query=f'select * from users where users.member_id="{member_id}"',
                                          enable_cross_partition_query=True)
             all_user_data = [i for i in item]
             if all_user_data:
                 users_data = all_user_data[0]
                 is_verified = users_data["is_verified"]
                 if is_verified == 'true':
-                    return HttpResponse("User is already verified", status_code=400)
+                    return HttpResponse(json.dumps({"msg": "User Already Verified", "status_code": 200}),
+                                        status_code=200, mimetype="application/json")
                 current_datetime = datetime.now()
                 current_date_time = current_datetime.strftime("%m/%d/%Y")
                 users_data['is_verified'] = 'true'
@@ -34,11 +37,12 @@ def main(req: HttpRequest) -> HttpResponse:
                 res = container.upsert_item(body=users_data)
                 print(res)
                 return HttpResponse(json.dumps({"patient_id": patient_id, "center_id": "id_d"}))
-            return HttpResponse("Data not found", status_code=404)
+            return HttpResponse(json.dumps({"msg": "Data not Found", "status_code": 404}), status_code=404,
+                                mimetype="application/json")
         else:
             return HttpResponse(
                 "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
                 status_code=200
             )
     else:
-        return HttpResponse("Method should be POST", status_code=400)
+        return HttpResponse(json.dumps({"msg": "Method should be POST", "status_code": 400}), status_code=400)

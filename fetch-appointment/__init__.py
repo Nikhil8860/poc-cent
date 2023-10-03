@@ -15,7 +15,10 @@ def main(req: HttpRequest) -> HttpResponse:
     patient_id = req.params.get('patient_id')
     appointment_status = req.params.get('appointment_status')
     if not patient_id and not appointment_status:
-        return HttpResponse("patient_id and appointment_status not in request parameters", status_code=400)
+        return HttpResponse(
+            json.dumps({"msg": "patient_id and appointment_status not in request parameters", "status_code": 400}),
+            status_code=400,
+            mimetype="application/json")
     elif patient_id and appointment_status == 'completed':
         item = container.query_items(query=f'select * from appointments '
                                            f'where appointments.patient_id="{patient_id}" and '
@@ -33,8 +36,7 @@ def main(req: HttpRequest) -> HttpResponse:
                                      enable_cross_partition_query=True)
     else:
         item = container.query_items(query=f'select * from appointments '
-                                           f'where appointments.patient_id="{patient_id}" and '
-                                           f'appointments.appointment_status="completed"',
+                                           f'where appointments.patient_id="{patient_id}"',
                                      enable_cross_partition_query=True)
 
     data = [i for i in item]
@@ -49,4 +51,7 @@ def main(req: HttpRequest) -> HttpResponse:
         sorted_data = [i for i in sorted_data]
     if len(data):
         return HttpResponse(json.dumps(sorted_data), status_code=200, mimetype="application/json", )
-    return HttpResponse("Data does not exists!!", status_code=400)
+    return HttpResponse(
+        json.dumps({"msg": "Data does not exists", "status_code": 400}),
+        status_code=400,
+        mimetype="application/json")
