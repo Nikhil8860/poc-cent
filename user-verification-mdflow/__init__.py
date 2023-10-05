@@ -33,16 +33,14 @@ def main(req: HttpRequest) -> HttpResponse:
                 users_data['is_verified'] = 'true'
                 users_data['verified_at'] = current_date_time
                 patient_id = users_data["patient_id"]
-                print(users_data)
                 res = container.upsert_item(body=users_data)
-                print(res)
-                return HttpResponse(json.dumps({"patient_id": patient_id, "center_id": "id_d"}))
+                return HttpResponse(
+                    json.dumps({"msg": "Verification is successful, click 'continue' to complete Sign-up.",
+                                "patient_id": patient_id, "center_id": 123, "status_code": 200}),
+                    status_code=200, mimetype="application/json")
             return HttpResponse(json.dumps({"msg": "Data not Found", "status_code": 404}), status_code=404,
                                 mimetype="application/json")
-        else:
-            return HttpResponse(
-                "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-                status_code=200
-            )
+
     else:
-        return HttpResponse(json.dumps({"msg": "Method should be POST", "status_code": 400}), status_code=400)
+        return HttpResponse(json.dumps({"msg": "Method should be POST", "status_code": 400}), status_code=400,
+                            mimetype="application/json")

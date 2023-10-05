@@ -19,19 +19,28 @@ def main(req: HttpRequest) -> HttpResponse:
         input_json['old_password'] = encrypted_pwd.decode()
         decrypted_pwd = decrypt_pwd(input_json['old_password'], fernet)  # Decode password
         if not input_json.get("patient_id"):
-            return HttpResponse("You have not provided patient_id in the request body", status_code=400)
+            return HttpResponse(json.dumps({"msg": "Error is request Body", "status_code": 400}), status_code=400,
+                                mimetype="application/json")
         container = get_db_container(container_name)
         item = container.query_items(query=f'select * from users where users.email="{input_json["email"]}"',
                                      enable_cross_partition_query=True)
         all_user_data = [i for i in item]
         if len(all_user_data):
-            return HttpResponse("User already Exists!!", status_code=400)
+            container.upsert_item(body=input_json)
+            return HttpResponse(json.dumps({"msg": "User updated", "status_code": 200}), status_code=200,
+                                mimetype="application/json")
         try:
             response = container.create_item(body=input_json)
             if response:
                 logging.info("User details updated!!!")
-                return HttpResponse("records inserted!!", status_code=200)
+                return HttpResponse(json.dumps({"msg": "record inserted", "status_code": 200}), status_code=200,
+                                    mimetype="application/json")
         except exceptions.CosmosHttpResponseError:
-            return HttpResponse(f"Error occured when creating item with item{input_json['id']}", status_code=400)
-        return HttpResponse("user created", status_code=201)
-    return HttpResponse("Invalid HTTP method it should be POST", status_code=400)
+            return HttpResponse(json.dumps(
+                {"msg": f"Error occur when creating item with item{input_json['id']}", "status_code": 400}),
+                                status_code=400,
+                                mimetype="application/json")
+        return HttpResponse(json.dumps({"msg": "user created", "status_code": 201}), status_code=201,
+                            mimetype="application/json")
+    return HttpResponse(json.dumps({"msg": "Method should be POST", "status_code": 400}), status_code=400,
+                        mimetype="application/json")
